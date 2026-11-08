@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘의 차 추천</title>
+<style>
+  :root{
+    --bg:#f6f1e7; --card:#fffdf8; --ink:#2b2a26; --muted:#7a766b;
+    --accent:#4f7a4a; --accent-2:#e4eddc; --line:#e5dfd0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1c1d1a; --card:#262823; --ink:#ecebe4; --muted:#a09d90; --accent:#9cc590; --accent-2:#33402f; --line:#3a3c35; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;line-height:1.55}
+  main{max-width:640px;margin:0 auto;padding:32px 16px 64px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  h1{font-size:1.6rem;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 24px}
+  nav{display:flex;gap:6px}
+  nav button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.85rem}
+  nav button.on{background:var(--accent-2);border-color:var(--accent);color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .progress{height:6px;background:var(--line);border-radius:3px;margin-bottom:20px;overflow:hidden}
+  .progress>div{height:100%;background:var(--accent);transition:width .3s}
+  .q{font-size:1.15rem;font-weight:600;margin:0 0 16px}
+  .opts{display:grid;gap:10px}
+  button{font:inherit;color:inherit;cursor:pointer}
+  .opt{text-align:left;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:transparent;transition:.15s}
+  .opt:hover,.opt:focus-visible{border-color:var(--accent);background:var(--accent-2);outline:none}
+  .primary{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-weight:600}
+  @media (prefers-color-scheme: dark){.primary{color:#14210f}}
+  .ghost{background:transparent;border:1px solid var(--line);border-radius:12px;padding:12px 20px}
+  .row{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap}
+  .result{display:grid;gap:14px;margin-top:4px}
+  .tea{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--card)}
+  .tea.top{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-2)}
+  .tea h3{margin:0 0 2px;font-size:1.2rem}
+  .tea .en{color:var(--muted);font-size:.85rem;margin-bottom:8px}
+  .badge{display:inline-block;background:var(--accent-2);color:var(--accent);border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:600}
+  .tea p{margin:8px 0}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .tag{font-size:.78rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+  .top-right{float:right;display:flex;gap:8px;align-items:center}
+  .match{font-weight:700;color:var(--accent)}
+  .fav{background:none;border:0;font-size:1.3rem;padding:0;line-height:1}
+  .hist{border-bottom:1px solid var(--line);padding:12px 0}
+  .hist:last-child{border:0}
+  .hist small{color:var(--muted)}
+  .empty{color:var(--muted);text-align:center;padding:24px 0}
+  .err{color:#b3402f}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>🍵 오늘의 차 추천</h1>
+      <p class="sub">몇 가지 질문에 답하면 지금 어울리는 차를 골라드려요.</p>
+    </div>
+    <nav>
+      <button data-tab="quiz" class="on">추천</button>
+      <button data-tab="favs">♥ 즐겨찾기</button>
+      <button data-tab="hist">기록</button>
+    </nav>
+  </header>
+  <div class="card" id="app"></div>
+</main>
+
+<script>
+// ---- 클라이언트 ID: 로그인 없이 브라우저별로 즐겨찾기/기록을 구분 -------------
+let clientId;
+try { clientId = localStorage.getItem("tea-client-id"); } catch {}
+if (!clientId) {
+  clientId = crypto.randomUUID();
+  try { localStorage.setItem("tea-client-id", clientId); } catch {}
+}
+
+async function api(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json", "X-Client-Id": clientId },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
+  return res.json();
+}
+
+// ---- 상태 ----------------------------------------------------------------
+const app = document.getElementById("app");
+let questions = [], teas = [], favorites = [];
+let step = 0, answers = {};
+
+const CAFF = ["카페인 없음","카페인 적음","카페인 보통","카페인 많음"];
+const TEMP = { hot: "따뜻하게", cold: "차갑게" };
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function labelOf(qid, v) {
+  const q = questions.find((x) => x.id === qid);
+  return q?.opts.find((o) => o.v === v)?.t ?? v;
+}
+
+// ---- 화면 ----------------------------------------------------------------
+function renderQuestion() {
+  const q = questions[step];
+  app.innerHTML = `
+    <div class="progress"><div style="width:${step / questions.length * 100}%"></div></div>
+    <p class="q">${step+1}/${questions.length} · ${esc(q.text)}</p>
+    <div class="opts">${q.opts.map((o,i) => `<button class="opt" data-i="${i}">${esc(o.t)}</button>`).join("")}</div>
+    ${step > 0 ? `<div class="row"><button class="ghost" id="back">← 이전</button></div>` : ""}`;
+  app.querySelectorAll(".opt").forEach((b) => b.onclick = () => {
+    answers[q.id] = q.opts[+b.dataset.i].v;
+    step++;
+    step < questions.length ? renderQuestion() : submit();
+  });
+  document.getElementById("back")?.addEventListener("click", () => { step--; renderQuestion(); });
+}
+
+async function submit() {
+  app.innerHTML = `<p class="empty">차를 고르는 중…</p>`;
+  try {
+    renderResult(await api("POST", "/api/recommend", { answers }));
+  } catch (e) {
+    app.innerHTML = `<p class="empty err">추천을 가져오지 못했어요: ${esc(e.message)}</p>
+      <div class="row"><button class="ghost" id="retry">다시 시도</button></div>`;
+    document.getElementById("retry").onclick = submit;
+  }
+}
+
+function teaCard(t, rank) {
+  const medal = rank === 0 ? "🥇 " : rank === 1 ? "🥈 " : rank === 2 ? "🥉 " : "";
+  const faved = favorites.includes(t.name);
+  return `
+    <div class="tea ${rank === 0 ? "top" : ""}">
+      <span class="top-right">
+        ${t.match != null ? `<span class="match">${t.match}%</span>` : ""}
+        <button class="fav" data-name="${esc(t.name)}" aria-label="즐겨찾기" aria-pressed="${faved}">${faved ? "♥" : "♡"}</button>
+      </span>
+      <h3>${medal}${esc(t.name)}</h3>
+      <div class="en">${esc(t.en)}</div>
+      <p>${esc(t.desc)}</p>
+      <div class="meta">
+        <span class="badge">${CAFF[t.caffeine]}</span>
+        <span class="tag">🫖 ${esc(t.brew)}</span>
+        ${t.temp.map((x) => `<span class="tag">${TEMP[x]}</span>`).join("")}
+      </div>
+    </div>`;
+}
+
+function bindFavs(onChange) {
+  app.querySelectorAll(".fav").forEach((b) => b.onclick = async () => {
+    const name = b.dataset.name;
+    try {
+      favorites = await api(favorites.includes(name) ? "DELETE" : "PUT", `/api/favorites/${encodeURIComponent(name)}`);
+      onChange();
+    } catch (e) { alert("저장하지 못했어요: " + e.message); }
+  });
+}
+
+function renderResult(list) {
+  const draw = () => {
+    app.innerHTML = `
+      <div class="progress"><div style="width:100%"></div></div>
+      <p class="q">당신을 위한 추천 차 ✨</p>
+      <div class="result">${list.map((t, i) => teaCard(t, i)).join("")}</div>
+      <div class="row">
+        <button class="primary" id="again">다시 해보기</button>
+        <button class="ghost" id="edit">답변 수정</button>
+      </div>`;
+    document.getElementById("again").onclick = () => { step = 0; answers = {}; renderQuestion(); };
+    document.getElementById("edit").onclick = () => { step = questions.length - 1; renderQuestion(); };
+    bindFavs(draw);
+  };
+  draw();
+}
+
+function renderFavs() {
+  const draw = () => {
+    const list = favorites.map((n) => teas.find((t) => t.name === n)).filter(Boolean);
+    app.innerHTML = list.length
+      ? `<p class="q">즐겨찾기한 차</p><div class="result">${list.map((t) => teaCard(t)).join("")}</div>`
+      : `<p class="empty">아직 즐겨찾기한 차가 없어요.<br>추천 결과의 ♡ 를 눌러 담아보세요.</p>`;
+    bindFavs(draw);
+  };
+  draw();
+}
+
+async function renderHistory() {
+  app.innerHTML = `<p class="empty">불러오는 중…</p>`;
+  try {
+    const hist = await api("GET", "/api/history");
+    if (!hist.length) { app.innerHTML = `<p class="empty">아직 추천 기록이 없어요.</p>`; return; }
+    app.innerHTML = `<p class="q">최근 추천 기록</p>` + hist.map((h) => `
+      <div class="hist">
+        <small>${new Date(h.at).toLocaleString("ko-KR")}</small><br>
+        <b>${h.top.map(esc).join(" · ")}</b><br>
+        <small>${esc(labelOf("goal", h.answers.goal))} / ${esc(labelOf("caffeine", h.answers.caffeine))} / ${esc(labelOf("flavor", h.answers.flavor))} / ${esc(labelOf("temp", h.answers.temp))}</small>
+      </div>`).join("") + `<div class="row"><button class="ghost" id="clear">기록 지우기</button></div>`;
+    document.getElementById("clear").onclick = async () => { await api("DELETE", "/api/history"); renderHistory(); };
+  } catch (e) {
+    app.innerHTML = `<p class="empty err">${esc(e.message)}</p>`;
+  }
+}
+
+// ---- 탭 / 시작 -----------------------------------------------------------
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("on", x === b));
+  ({ quiz: () => { step = 0; answers = {}; renderQuestion(); }, favs: renderFavs, hist: renderHistory })[b.dataset.tab]();
+});
+
+(async () => {
+  try {
+    [questions, teas, favorites] = await Promise.all([
+      api("GET", "/api/questions"), api("GET", "/api/teas"), api("GET", "/api/favorites"),
+    ]);
+    renderQuestion();
+  } catch (e) {
+    app.innerHTML = `<p class="empty err">서버에 연결하지 못했어요: ${esc(e.message)}<br>npm start 로 서버를 실행했는지 확인해 주세요.</p>`;
+  }
+})();
+</script>
+</body>
+</html>

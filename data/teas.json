@@ -1,0 +1,51 @@
+{
+  "questions": [
+    {"id":"goal","text":"지금 어떤 기분(또는 목적)인가요?","opts":[
+      {"t":"집중하고 싶어요 📚","v":"focus"},
+      {"t":"긴장을 풀고 쉬고 싶어요 🛋️","v":"relax"},
+      {"t":"잠들기 전이에요 🌙","v":"sleep"},
+      {"t":"속이 더부룩해요 🍚","v":"digest"},
+      {"t":"몸이 으슬으슬해요 🧣","v":"warm"},
+      {"t":"기운을 내고 싶어요 ⚡","v":"energy"},
+      {"t":"상쾌하게 기분전환 🌿","v":"refresh"}
+    ]},
+    {"id":"caffeine","text":"카페인은 어느 정도까지 괜찮아요?","opts":[
+      {"t":"전혀 안 돼요 (0)","v":0},
+      {"t":"조금만 (낮음)","v":1},
+      {"t":"적당히 (보통)","v":2},
+      {"t":"많아도 괜찮아요","v":3}
+    ]},
+    {"id":"flavor","text":"끌리는 맛과 향은요?","opts":[
+      {"t":"꽃향기 · 은은한 🌸","v":"floral"},
+      {"t":"새콤 · 상큼한 🍋","v":"sour"},
+      {"t":"달콤 · 부드러운 🍯","v":"sweet"},
+      {"t":"구수 · 고소한 🌾","v":"roasted"},
+      {"t":"진하고 묵직한 ☕","v":"robust"},
+      {"t":"알싸 · 시원한 🌶️","v":"spicy"},
+      {"t":"풀내음 · 깔끔한 🍃","v":"grassy"}
+    ]},
+    {"id":"temp","text":"어떻게 마실까요?","opts":[
+      {"t":"따뜻하게 ♨️","v":"hot"},
+      {"t":"시원하게 🧊","v":"cold"}
+    ]}
+  ],
+  "teas": [
+    {"name":"녹차","en":"Green tea","caffeine":2,"flavor":["grassy","bitter","light"],"goal":["focus","digest","refresh"],"temp":["hot","cold"],"desc":"깔끔하고 산뜻한 풀 향. 카테킨이 풍부해 집중과 개운함에 좋아요.","brew":"70~80℃ · 1~2분"},
+    {"name":"말차","en":"Matcha","caffeine":3,"flavor":["grassy","creamy","bitter"],"goal":["focus","energy"],"temp":["hot","cold"],"desc":"찻잎을 통째로 갈아 마시는 진한 녹차. 부드러운 감칠맛과 확실한 각성감.","brew":"70~80℃ · 거품내어 바로"},
+    {"name":"홍차","en":"Black tea","caffeine":3,"flavor":["robust","sweet"],"goal":["energy","focus"],"temp":["hot","cold"],"desc":"깊은 향과 묵직한 바디감. 우유를 더해 밀크티로도 잘 어울려요.","brew":"95℃ · 3~4분"},
+    {"name":"얼그레이","en":"Earl Grey","caffeine":2,"flavor":["floral","citrus","robust"],"goal":["focus","relax"],"temp":["hot","cold"],"desc":"베르가못의 상큼한 시트러스 향이 더해진 홍차.","brew":"95℃ · 3분"},
+    {"name":"우롱차","en":"Oolong","caffeine":2,"flavor":["roasted","floral","light"],"goal":["digest","focus"],"temp":["hot","cold"],"desc":"녹차와 홍차의 중간. 기름진 식사 후 속을 정리해줘요.","brew":"90~95℃ · 2~3분"},
+    {"name":"보이차","en":"Pu-erh","caffeine":2,"flavor":["earthy","robust","roasted"],"goal":["digest","warm"],"temp":["hot"],"desc":"발효된 깊고 흙내음 나는 맛. 식후 소화에 도움을 줘요.","brew":"95~100℃ · 1~2분"},
+    {"name":"백차","en":"White tea","caffeine":1,"flavor":["light","sweet","floral"],"goal":["relax","refresh"],"temp":["hot","cold"],"desc":"가공을 최소화한 은은하고 순한 차. 카페인이 낮아요.","brew":"80~85℃ · 3분"},
+    {"name":"캐모마일","en":"Chamomile","caffeine":0,"flavor":["floral","sweet","light"],"goal":["relax","sleep"],"temp":["hot"],"desc":"사과 같은 달콤한 꽃향. 잠들기 전 마음을 가라앉혀줘요.","brew":"95℃ · 5분"},
+    {"name":"페퍼민트","en":"Peppermint","caffeine":0,"flavor":["minty","refresh"],"goal":["digest","refresh","focus"],"temp":["hot","cold"],"desc":"시원한 멘톨 향. 더부룩할 때, 머리가 무거울 때 좋아요.","brew":"95℃ · 5분"},
+    {"name":"히비스커스","en":"Hibiscus","caffeine":0,"flavor":["sour","fruity"],"goal":["refresh","energy"],"temp":["cold","hot"],"desc":"선명한 붉은빛과 새콤한 맛. 아이스로 마시면 특히 좋아요.","brew":"95℃ · 5분"},
+    {"name":"루이보스","en":"Rooibos","caffeine":0,"flavor":["sweet","earthy","robust"],"goal":["relax","warm","sleep"],"temp":["hot","cold"],"desc":"구수하고 달큰한 허브차. 카페인 없이 홍차 같은 느낌을 줘요.","brew":"100℃ · 5~7분"},
+    {"name":"생강차","en":"Ginger tea","caffeine":0,"flavor":["spicy","sweet"],"goal":["warm","digest"],"temp":["hot"],"desc":"알싸하게 몸을 데워주는 차. 추운 날과 감기 기운에 제격이에요.","brew":"95℃ · 5~10분"},
+    {"name":"유자차","en":"Yuja tea","caffeine":0,"flavor":["citrus","sweet","fruity"],"goal":["warm","refresh","relax"],"temp":["hot","cold"],"desc":"새콤달콤한 유자청 차. 비타민이 풍부하고 목이 편안해져요.","brew":"뜨거운 물 · 바로"},
+    {"name":"보리차","en":"Barley tea","caffeine":0,"flavor":["roasted","earthy","light"],"goal":["digest","relax","warm"],"temp":["hot","cold"],"desc":"구수하고 부담 없는 차. 매일 마셔도 편해요.","brew":"끓여서 · 5~10분"},
+    {"name":"쟈스민차","en":"Jasmine tea","caffeine":1,"flavor":["floral","light","sweet"],"goal":["relax","refresh"],"temp":["hot","cold"],"desc":"재스민 꽃향이 은은하게 퍼지는 녹차 베이스 차.","brew":"80℃ · 2~3분"},
+    {"name":"로즈힙","en":"Rosehip","caffeine":0,"flavor":["sour","fruity","light"],"goal":["refresh","warm"],"temp":["hot","cold"],"desc":"새콤한 과일 향의 비타민C 풍부한 차.","brew":"95℃ · 5~7분"},
+    {"name":"마살라 차이","en":"Masala chai","caffeine":2,"flavor":["spicy","sweet","robust","creamy"],"goal":["warm","energy"],"temp":["hot"],"desc":"홍차에 시나몬·카다멈·생강을 더한 향신료 밀크티.","brew":"끓여서 · 우유와 함께"}
+  ]
+}
